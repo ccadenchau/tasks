@@ -29,7 +29,8 @@ export async function readBackup(file) {
   if (file.size > LIMIT) throw new Error('Backup exceeds 100 MB.');
   const backup = JSON.parse(await file.text());
   if (backup.version !== 2 || !Array.isArray(backup.files)) throw new Error('Unsupported backup.');
-  const data = validateData(backup.data), seen = new Set();
+  const restored = { ...backup.data, scheduledTasks: backup.data.scheduledTasks || [] };
+  const data = validateData(restored), seen = new Set();
   if (backup.files.length !== data.attachments.length) throw new Error('Missing attachment data.');
   const metadata = new Map(data.attachments.map(file => [file.id, file]));
   const blobs = backup.files.map(file => {

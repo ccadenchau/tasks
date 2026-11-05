@@ -81,6 +81,81 @@
 .file-list h3 { font-size: 12px; font-weight: 600; }
 .task-content, .task-panel-scroll, .tag-manager-list { scrollbar-width: thin; scrollbar-color: #c8d3e2 transparent; }
 .view-toggle { flex-shrink: 0; padding: 6px 0; color: var(--accent); }
+.view-switcher { display: flex; align-items: center; gap: 3px; flex-shrink: 0; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.view-option { display: grid; place-items: center; width: 32px; height: 30px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--muted); }
+.view-option:hover { background: #f3f7fc; color: var(--secondary); }
+.view-option.selected { background: #edf4ff; color: var(--accent); }
+.task-content:has(.calendar-view) { padding-bottom: 0; overflow: hidden; }
+.calendar-view { width: min(100%, calc((100dvh - 230px) * 7 / 6)); margin: 0 auto; padding: 4px 12px; }
+.calendar-month { overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.calendar-month-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 0 8px; }
+.calendar-month-title { display: flex; align-items: baseline; gap: 10px; }
+.calendar-month-header h2 { color: #344860; font-size: 15px; font-weight: 600; }
+.calendar-month-count { color: var(--muted); font-size: 10px; }
+.calendar-month-controls { display: flex; align-items: center; gap: 5px; }
+.calendar-nav, .calendar-today { display: grid; place-items: center; min-width: 30px; height: 29px; padding: 0 7px; border: 1px solid var(--border); border-radius: 5px; background: #fff; color: var(--secondary); font-size: 15px; }
+.calendar-nav:hover, .calendar-today:hover { background: #f3f7fc; }
+.calendar-today { font-size: 10px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.calendar-weekday { padding: 6px 10px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); background: #fbfdff; color: var(--muted); font-size: 10px; font-weight: 500; }
+.calendar-weekday:nth-child(7n) { border-right: 0; }
+.calendar-day { min-width: 0; aspect-ratio: 1; overflow: hidden; padding: 5px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.calendar-day:nth-child(7n) { border-right: 0; }
+.calendar-day--empty { background: #fbfdff; }
+.calendar-day--today { background: #f7faff; }
+.calendar-day-number { display: grid; place-items: center; width: 23px; height: 23px; margin-bottom: 5px; border-radius: 50%; color: #687b94; font-size: 10px; }
+.calendar-day--today .calendar-day-number { background: var(--accent); color: #fff; font-weight: 600; }
+.calendar-task { display: flex; align-items: flex-start; gap: 6px; width: 100%; margin: 3px 0; padding: 5px 6px; border: 0; border-radius: 5px; background: color-mix(in srgb, var(--calendar-task-color) 13%, white); color: color-mix(in srgb, var(--calendar-task-color) 75%, #263449); font-size: 10px; line-height: 1.35; text-align: left; cursor: pointer; }
+.calendar-task:hover { background: color-mix(in srgb, var(--calendar-task-color) 21%, white); }
+.calendar-task.is-done { background: #f2f5f9; color: #94a3b8; text-decoration: line-through; }
+.calendar-task.overdue { background: #fff1f1; color: var(--danger) !important; }
+.calendar-task-dot { flex: 0 0 6px; width: 6px; height: 6px; margin-top: 3px; border-radius: 50%; background: var(--calendar-task-color); }
+.calendar-task-dot.is-done { background: #aab6c5; }
+.calendar-task-dot.overdue { background: var(--danger); }
+.tooltip-anchor { position: relative; }
+.custom-tooltip { position: absolute; left: 50%; top: calc(100% + 8px); z-index: 20; width: max-content; max-width: 190px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--secondary); font-size: 10px; line-height: 1.35; text-align: center; white-space: normal; box-shadow: 0 6px 18px #234b8318; opacity: 0; pointer-events: none; transform: translate(-50%, -3px); transition: opacity .12s ease, transform .12s ease; }
+.custom-tooltip::before { content: ''; position: absolute; left: 50%; bottom: 100%; width: 7px; height: 7px; border-top: 1px solid var(--border); border-left: 1px solid var(--border); background: #fff; transform: translate(-50%, 4px) rotate(45deg); }
+.tooltip-anchor:hover .custom-tooltip, .tooltip-anchor:focus-visible .custom-tooltip { opacity: 1; transform: translate(-50%, 0); }
+.calendar-month[data-month-direction='next'] { animation: calendar-month-next .22s ease-out both; }
+.calendar-month[data-month-direction='previous'] { animation: calendar-month-previous .22s ease-out both; }
+.task-content.is-tag-board .task-tags { display: none; }
+.scheduled-view { width: min(100%, 760px); margin: 0 auto; padding: 28px 24px; }
+.scheduled-heading h2 { margin-bottom: 5px; color: #344860; font-size: 17px; font-weight: 600; }
+.scheduled-heading p, .scheduled-card-main p { color: var(--muted); font-size: 11px; }
+.scheduled-create { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; gap: 8px; margin: 20px 0 18px; }
+.scheduled-create .button { padding-block: 7px; }
+.scheduled-list { display: flex; flex-direction: column; gap: 9px; }
+.scheduled-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 16px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+.scheduled-card.is-complete { border-color: #ccebd4; background: #fbfefb; }
+.scheduled-card.is-complete .scheduled-progress { color: #15803d; }
+.scheduled-card-main { flex: 1; min-width: 0; }
+.scheduled-card-main h3 { margin-bottom: 5px; color: #435775; font-size: 12px; font-weight: 500; }
+.scheduled-progress { color: var(--secondary); font-size: 10px; }
+.scheduled-checklist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.scheduled-check { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 1.5px solid #c4d2e3; border-radius: 50%; background: #fff; color: #fff; font-size: 12px; cursor: pointer; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+.scheduled-check.is-complete { border-color: #22c55e; background: #22c55e; transform: scale(1.04); }
+.scheduled-stats { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 13px; }
+.scheduled-stat { display: flex; flex-direction: column; gap: 2px; }
+.scheduled-stat strong { color: #435775; font-size: 11px; font-weight: 600; }
+.scheduled-stat span { color: var(--muted); font-size: 9px; }
+.scheduled-actions { display: flex; align-items: center; gap: 6px; }
+.scheduled-step, .scheduled-delete { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--secondary); font-size: 11px; font-weight: 500; }
+.scheduled-step:hover, .scheduled-delete:hover { background: #f3f7fc; }
+.scheduled-step--primary { border-color: #16a34a; background: #22c55e; color: #fff; }
+.scheduled-step--primary:hover { background: #16a34a; }
+.scheduled-step--undo { color: var(--secondary); }
+.scheduled-delete { width: 30px; min-height: 30px; padding: 4px; border: 0; color: #94a3b8; }
+.scheduled-stats-anchor { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; color: #8392a8; cursor: pointer; }
+.scheduled-stats-anchor:hover, .scheduled-stats-anchor:focus-visible { background: #edf4ff; color: var(--accent); outline: none; }
+.scheduled-stats-card { position: absolute; right: -5px; top: calc(100% + 8px); z-index: 30; display: block; width: 248px; padding: 13px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--secondary); box-shadow: 0 8px 24px #234b8318; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .14s ease, transform .14s ease; }
+.scheduled-stats-card::before { content: ''; position: absolute; top: -5px; right: 15px; width: 8px; height: 8px; border-top: 1px solid var(--border); border-left: 1px solid var(--border); background: #fff; transform: rotate(45deg); }
+.scheduled-stats-card > strong { display: block; margin-bottom: 10px; color: #344860; font-size: 11px; font-weight: 600; }
+.scheduled-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px 14px; }
+.scheduled-stat { display: flex; flex-direction: column; gap: 3px; }
+.scheduled-stat strong { color: #435775; font-size: 12px; font-weight: 600; }
+.scheduled-stat span { color: var(--muted); font-size: 9px; }
+.tooltip-anchor:hover .scheduled-stats-card, .tooltip-anchor:focus-visible .scheduled-stats-card { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.scheduled-empty { padding: 42px 12px; color: var(--muted); font-size: 12px; text-align: center; }
 .tag-search { position: relative; margin-top: 12px; }
 .tag-search-results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 6; display: flex; flex-direction: column; align-items: stretch; gap: 7px; max-height: 220px; overflow-y: auto; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: 0 8px 24px #234b8318; animation: tag-results-in .16s ease-out; }
 .tag-search-results { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
@@ -174,6 +249,8 @@ button.color-swatch { border: 0; padding: 0; background: none; }
 .confirm-actions { flex-shrink: 0; display: flex; justify-content: flex-end; gap: 8px; padding: 0 24px 22px; }
 @keyframes task-panel-in { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes tag-results-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes calendar-month-next { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes calendar-month-previous { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
 .content-snapshot { position: fixed; z-index: 4; flex: none; margin: 0; overflow: hidden; pointer-events: none; background: #fff; }
 
 @media (max-width: 1200px) {

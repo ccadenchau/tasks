@@ -44,6 +44,8 @@ button.tag:hover { border-color: var(--tag-color); }
 .tag-selected { margin-left: 3px; }
 .task-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
 .task-tags .tag { flex: 0 1 auto; min-width: 0; max-width: 100%; padding: 4px 8px; font-size: 10px; }
+.task-tags .tag { border-color: transparent; background: transparent; }
+.task-tags .tag:hover { border-color: transparent; }
 .tag-text { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .tags-empty { color: var(--muted); font-size: 10px; }
 .modal { width: min(560px, calc(100vw - 32px)); max-height: min(80dvh, 640px); padding: 0; border: 1px solid #dce5f0; border-radius: 14px; overflow: hidden; background: #fff; color: var(--text); box-shadow: 0 24px 80px #172b4d30; }

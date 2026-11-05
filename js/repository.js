@@ -13,7 +13,7 @@ const finished = transaction => new Promise((resolve, reject) => {
 
 export async function openRepository(name = 'taskspace-db') {
   if (!globalThis.indexedDB) throw new Error('Browser storage is unavailable.');
-  const request = indexedDB.open(name, 2);
+  const request = indexedDB.open(name, 3);
   request.onupgradeneeded = () => {
     const database = request.result;
     // Retain older stores so removing features never removes existing records.

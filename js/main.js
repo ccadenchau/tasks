@@ -52,7 +52,30 @@ async function start() {
     sortBy(sort) { const ui = store.getState().ui; updateView({ sort, direction: ui.sort === sort && ui.direction === 'asc' ? 'desc' : 'asc' }); },
     resetOrder() { updateView({ sort: 'manual', direction: 'asc' }); },
     changeStatusFilter(status) { if (store.getState().ui.status !== status) updateView({ status, limit: 100 }); },
-    toggleView() { updateView({ view: store.getState().ui.view === 'board' || store.getState().ui.view === 'tag-board' ? 'list' : 'board', limit: 100 }); },
+    toggleView() { const view = store.getState().ui.view; updateView({ view: view === 'calendar' ? 'list' : view === 'list' ? 'board' : 'calendar', limit: 100 }); },
+    setView(view) { updateView({ view, limit: 100 }); },
+    async addScheduledTask(title, target) {
+      const clean = title.trim();
+      if (!clean || !Number.isInteger(target) || target < 1) throw new Error('Enter a goal and a positive daily target.');
+      await store.mutate(data => { data.scheduledTasks.push({ id: uid(), title: clean, target, createdAt: new Date().toISOString(), progress: [] }); });
+    },
+    async updateScheduledProgress(id, date, delta) {
+      await store.mutate(data => {
+        const item = data.scheduledTasks.find(entry => entry.id === id); if (!item) return;
+        const entry = item.progress.find(value => value.date === date);
+        const count = Math.max(0, Math.min(item.target, (entry?.count || 0) + delta));
+        item.progress = item.progress.filter(value => value.date !== date);
+        if (count) item.progress.push({ date, count });
+        item.progress.sort((a, b) => a.date.localeCompare(b.date));
+      });
+    },
+    deleteScheduledTask(id) {
+      const task = store.getState().data.scheduledTasks.find(item => item.id === id);
+      if (!task) return;
+      ctx.askConfirmation({ title: 'Delete daily goal?', message: `“${task.title}” and its progress will be deleted.`, action: async () => {
+        await store.mutate(data => { data.scheduledTasks = data.scheduledTasks.filter(item => item.id !== id); });
+      } });
+    },
     toggleBoardMode() { updateView({ view: store.getState().ui.view === 'tag-board' ? 'board' : 'tag-board', limit: 100 }); },
     async addTask(title) {
       const tagIds = [...store.getState().ui.tagIds];

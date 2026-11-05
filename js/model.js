@@ -1,7 +1,7 @@
 import { documentFromText, documentText, documentToMarkdown, validateDocument } from './document.js';
 import { normalizeColor } from './tag-colors.js';
 
-export const COLLECTIONS = ['tasks', 'pages', 'tags', 'attachments'];
+export const COLLECTIONS = ['tasks', 'pages', 'tags', 'attachments', 'scheduledTasks'];
 export const uid = () => crypto.randomUUID();
 export const now = () => new Date().toISOString();
 
@@ -50,6 +50,9 @@ export function validateData(data) {
   }
   for (const file of data.attachments) {
     if (typeof file.name !== 'string' || !file.name || typeof file.type !== 'string' || file.type.length > 200 || !Number.isInteger(file.size) || file.size < 0 || file.size > 25 * 1024 * 1024 || !['task', 'page'].includes(file.ownerType) || !(file.ownerType === 'task' ? ids.tasks : ids.pages).has(file.ownerId)) throw new Error('Invalid attachment.');
+  }
+  for (const task of data.scheduledTasks) {
+    if (typeof task.title !== 'string' || !task.title.trim() || task.title.length > 1000 || !Number.isInteger(task.target) || task.target < 1 || task.target > 100 || !task.createdAt || !Array.isArray(task.progress) || task.progress.some(item => !validDate(item.date) || !Number.isInteger(item.count) || item.count < 0 || item.count > task.target)) throw new Error('Invalid scheduled task.');
   }
   return data;
 }
