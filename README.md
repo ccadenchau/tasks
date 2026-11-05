@@ -2,9 +2,9 @@
 
 A static checklist app written in vanilla HTML, CSS, and JavaScript. Host it on GitHub Pages; checklist data syncs directly to the existing API at `api.cadenchau.com`. No Worker, Zero Trust setup, Node server, or npm dependencies are required.
 
-The app asks for your API password when opened. It builds the Authorization header in memory and sends it only to the configured API over HTTPS. The password is not stored in source, localStorage, sessionStorage, IndexedDB, or the deployment. Refreshing requires signing in again. **Data → Sign out** saves pending local edits, clears the in-memory credential, and reloads the sign-in screen.
+The app asks for your API password the first time. **Remember me on this device** is checked by default; after a successful sign-in the app saves the Basic Authorization value in localStorage and uses it to sign in automatically after refresh. Uncheck it to keep the login only in memory. **Data → Sign out** saves pending local edits, clears the remembered credential, and reloads the sign-in screen. If the API password changes, the saved login is rejected and removed.
 
-The website's HTML, CSS, and JavaScript are public. The API protects remote checklist data with its own authentication; this sign-in screen does not make GitHub Pages files private. Cached checklist data remains unencrypted in that browser's IndexedDB, so use a trusted browser profile. GitHub's private Pages access control requires an eligible Enterprise Cloud organization. [Pages visibility documentation](https://docs.github.com/en/enterprise-cloud%40latest/pages/getting-started-with-github-pages/changing-the-visibility-of-your-github-pages-site)
+The website's HTML, CSS, and JavaScript are public. The API protects remote checklist data with its own authentication; this sign-in screen does not make GitHub Pages files private. A remembered login is accessible to scripts running on this site's origin and to anyone with access to this browser profile, so use it only on a trusted device. Cached checklist data also remains unencrypted in IndexedDB. Keep the GitHub repository private if you also want to restrict access to the source code; that does not make a published Pages site private. GitHub's private Pages access control requires an eligible Enterprise Cloud organization. [Pages visibility documentation](https://docs.github.com/en/enterprise-cloud%40latest/pages/getting-started-with-github-pages/changing-the-visibility-of-your-github-pages-site)
 
 ## Set up GitHub Pages
 
@@ -30,15 +30,15 @@ If the old Cloudflare Worker or Access application was deployed, remove its rout
 
 Open `https://tasks.cadenchau.com` and enter the password used by `api.cadenchau.com`. The API username is `admin`, set in `js/sign-in.js`. This is your API password, not your GitHub password. An incorrect password keeps the app on the sign-in screen.
 
-The API must allow the page's origin, the `Authorization` and `Content-Type` headers, and GET/POST/PUT requests through CORS. The existing API configuration allows `cadenchau.com` and its subdomains, including `tasks.cadenchau.com`.
+The API must allow the page's origin, the `Authorization` and `Content-Type` headers, and GET/POST/PUT requests through CORS. The existing API configuration allows `cadenchau.com` and its subdomains, including `tasks.cadenchau.com`. To change the password, update `SITE_PASSWORD` in the API server's private environment configuration and restart that API. Do not put this setting in this repository or in a frontend build variable.
 
 If you use a `https://YOUR-USERNAME.github.io` address instead, add that exact origin to the API server's `CORS_ORIGINS` setting and restart the API. Origins do not include the repository path. Local previews likewise need their exact HTTP origin allowed. CORS configuration lives on the API server, not GitHub Pages.
 
-The API credential must permit reading/writing the `tasks_cadenchau_com` collection and creating it if missing. Authentication remains enforced by the API; the client only operates on that collection. No credential is prefilled or committed.
+The API credential must permit reading/writing the `tasks_cadenchau_com` collection and creating it if missing. Authentication remains enforced by the API; the client only operates on that collection. No credential is included in source or committed.
 
-Existing browser data uploads after signing in on its original origin and browser. Changing the hostname changes the IndexedDB origin; export a backup before moving to another hostname and import it afterward if needed.
+Existing browser data uploads after signing in on its original origin and browser. Changing the hostname changes the IndexedDB origin and remembered login; export a backup before moving to another hostname and import it afterward if needed.
 
-## Directory layout
+## Files
 
 ```text
 .
@@ -51,21 +51,33 @@ Existing browser data uploads after signing in on its original origin and browse
 │   ├── app.css                Layout and responsive styles
 │   └── vendor/                Editor styles
 ├── js/
-│   ├── main.js                Sign-in, initialization, and app actions
+│   ├── main.js                App startup, actions, and event wiring
 │   ├── sign-in.js             Password form and in-memory authorization
-│   ├── ui.js                  List and board rendering
-│   ├── model.js               Task operations and validation
-│   ├── document.js            Note validation and legacy conversion
+│   ├── ui.js                  Main layout, task views, and search
+│   ├── task-panel.js          Task editor, status, notes, and subtasks
+│   ├── task-session.js        Draft state and autosave
+│   ├── model.js               Data shape, validation, and task operations
+│   ├── document.js            Markdown note conversion and validation
 │   ├── repository.js          IndexedDB persistence
-│   ├── store.js               State and queued writes
-│   ├── task-panel.js          Resizable task editor
-│   ├── task-session.js        Drafts and autosave
-│   ├── inline-markdown.js     Inline Markdown editing
-│   ├── sync-api.js            Authenticated browser API requests
-│   ├── sync.js                Automatic sync and retries
-│   ├── sync-model.js          Record merging and deletion tracking
-│   ├── vendor/                Bundled editor and licenses
-│   └── …                      Tags, help, dialogs, animation, and shortcuts
+│   ├── store.js               App state, queued writes, and cross-tab updates
+│   ├── sync-api.js            Authenticated requests and attachment chunks
+│   ├── sync.js                Sync scheduling, retries, and polling
+│   ├── sync-model.js          Change tracking and conflict merging
+│   ├── inline-markdown.js     Inline Markdown editor setup
+│   ├── vendor/                Bundled editor, versions, and licenses
+│   ├── backup.js              JSON export and import
+│   ├── completion.js          Completion feedback animation
+│   ├── controls.js            Shared input and button components
+│   ├── dialogs.js             Reusable confirmation dialog
+│   ├── dom.js                 Small DOM rendering helpers
+│   ├── help.js                Keyboard shortcut dialog
+│   ├── layout.js              Active tab indicator sizing
+│   ├── panel-resize.js        Sidebar resizing
+│   ├── shortcuts.js           Shortcut definitions and handling
+│   ├── status-actions.js      Status changes and completion
+│   ├── tag-colors.js          Tag color handling
+│   ├── tags.js                Tag editor, picker, and tag views
+│   └── transitions.js         View switching animation
 ├── scripts/
 │   ├── build.mjs              Optional static export to dist/
 │   └── check.mjs              Syntax, references, and module checks
@@ -73,10 +85,11 @@ Existing browser data uploads after signing in on its original origin and browse
 ├── sw.js                      Retires the previous offline cache
 ├── .gitignore                 Excludes generated files and local secrets
 ├── package.json               Optional development commands
-└── package-lock.json          No npm dependencies
 ```
 
-The inline editor uses a locally bundled ProseMirror library. Its versions and licenses are in `js/vendor/`; no CDN requests are needed. The remaining app modules separate rendering, storage, sync, and interactions. `npm run check` rejects unreachable application modules. Compatibility code preserves older saved notes and retires old service-worker caches.
+The inline editor uses a locally bundled ProseMirror library. Its versions and licenses are in `js/vendor/`; no CDN requests are needed. Each application JavaScript module is imported from `js/main.js`, directly or through another module. `npm run check` verifies JavaScript syntax and relative imports, checks the files referenced by `index.html`, and fails if an app module is unreachable. `sw.js` is a one-time compatibility file: it unregisters the previous app service worker and removes its old shell cache. Keep it while returning users may still have that old worker installed.
+
+The small `scripts/` folder and `package.json` are only for local checks and making an optional `dist/` export; GitHub Pages serves the root files directly. There is no dependency lockfile because the project has no npm dependencies. `tests/` contains local tests and is not needed by the deployed app. `.env` and `.env.*` are ignored in case local tooling uses private settings; the browser app has no API key or password file.
 
 ## Development and checks
 
@@ -86,9 +99,9 @@ Serve the directory over HTTP with any static web server; ES modules do not work
 python3 -m http.server 8080
 ```
 
-This is only a local preview server. The deployed site is static. To sign in locally, allow `http://localhost:8080` on the API through CORS. Reloading requires an API connection to authenticate; after sign-in, local edits remain available during temporary connection failures.
+This is only a local preview server. The deployed site is static. To sign in locally, add the exact origin `http://localhost:8080` to the API server's `CORS_ORIGINS` setting and restart the API. Reloading requires an API connection to authenticate; after sign-in, local edits remain available during temporary connection failures.
 
-Optional checks use Node, with no package installation required:
+Optional checks use Node, with no package installation required. Node is only needed for these developer commands; it does not run the website:
 
 ```sh
 npm test
@@ -152,7 +165,7 @@ Each browser has a `checklist_<replica>` snapshot. Records merge by monotonic ti
 | Unable to connect at sign-in | Check API availability, HTTPS, and its CORS allowlist for the exact page origin. |
 | Login works on the custom domain but not github.io | Add the github.io origin to the API's CORS settings, or use `tasks.cadenchau.com`. |
 | Old Cloudflare login still appears | Remove the Access application and Worker route for the hostname, then verify DNS points to Pages. |
-| Sync fails after the API password changes | Reload and sign in again. Export unsynced edits first if needed. |
+| Sync fails after the API password changes | The remembered login is cleared; enter the new API password. Export unsynced edits first if needed. |
 | Sync fails with large data | Check API request and collection size limits. Local edits remain saved. |
 | Pages shows a 404 | Confirm the selected branch/root contains `index.html`; check the Pages deployment status and custom domain. |
 | Data seems missing after changing hosts | IndexedDB is per origin. Return to the old origin to export, or restore a backup. |

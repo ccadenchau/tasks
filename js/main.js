@@ -13,7 +13,7 @@ import { App } from './ui.js';
 import { handleShortcut } from './shortcuts.js';
 import { startCloudSync } from './sync.js';
 import { createContentTransition } from './transitions.js';
-import { signIn } from './sign-in.js';
+import { clearRememberedLogin, signIn } from './sign-in.js';
 
 const root = document.querySelector('#app');
 
@@ -40,7 +40,7 @@ async function start() {
   const ctx = {
     store,
     syncNow: () => cloud.request(),
-    signOut() { ctx.attempt(async () => { await flushTask(); await store.whenIdle(); cloud.stop(); api.signOut(); location.reload(); }); },
+    signOut() { ctx.attempt(async () => { await flushTask(); await store.whenIdle(); cloud.stop(); api.signOut(); clearRememberedLogin(); location.reload(); }); },
     openHelp(event) { helpReturnFocus = event?.currentTarget || document.activeElement; store.ui({ helpOpen: true }); },
     closeHelp() { store.ui({ helpOpen: false }); requestAnimationFrame(() => { if (helpReturnFocus?.isConnected) helpReturnFocus.focus(); }); },
     showError(error) { store.error(error.message); },
