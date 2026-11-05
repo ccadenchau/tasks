@@ -1,6 +1,7 @@
 import { h } from './dom.js';
 import { normalizeColor, tagAppearance, TAG_PALETTE } from './tag-colors.js';
 import { button, field, iconButton, input } from './controls.js';
+import { mountTabTrack } from './layout.js';
 
 export function tagChip(tag, onClick, { selected = false, onRemove } = {}) {
   const children = [h('span', { class: 'tag-dot', 'aria-hidden': 'true' }), h('span', { class: 'tag-text' }, tag.name), selected && h('span', { class: 'tag-selected', 'aria-hidden': 'true' }, '✓')];
@@ -10,7 +11,7 @@ export function tagChip(tag, onClick, { selected = false, onRemove } = {}) {
 }
 
 export function TagViews(state, ctx) {
-  return h('nav', { class: 'task-views', 'aria-label': 'Task views', 'data-keep-panel': '' },
+  return h('nav', { class: 'task-views', 'aria-label': 'Task views', 'data-keep-panel': '', onMount: mountTabTrack, onUnmount: node => node.disposeLayout?.() },
     button('All tasks', () => ctx.viewTag(null), { class: `task-view ${!state.ui.tagIds.length ? 'selected' : ''}`, 'aria-pressed': String(!state.ui.tagIds.length) }),
     state.data.tags.map(tag => tagChip(tag, () => ctx.viewTag(tag.id), { selected: state.ui.tagIds.includes(tag.id) })),
   );

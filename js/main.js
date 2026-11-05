@@ -144,7 +144,7 @@ async function start() {
     openTags(taskId = null) { tagReturnFocus = document.activeElement; store.ui({ tagsOpen: true, tagEdit: null, tagFormKey: uid(), tagTarget: taskId, tagSearchOpen: false }); },
     closeTags() { store.ui({ tagsOpen: false }); requestAnimationFrame(() => tagReturnFocus?.isConnected && tagReturnFocus.focus()); },
     selectTag(id) { store.ui({ tagEdit: id, tagFormKey: uid() }); },
-    async viewTag(id) { await ctx.closeEditor(); updateView({ tagIds: id ? [id] : [], query: '', status: 'all', limit: 100 }); },
+    async viewTag(id) { await ctx.closeEditor(); updateView({ tagIds: id ? [id] : [], query: '', limit: 100 }); },
     async saveTag(fields) {
       let id;
       await store.mutate(data => { id = saveTag(data, fields); });

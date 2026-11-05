@@ -67,19 +67,34 @@ function Search(state, ctx) {
 }
 
 function TaskHeading(state, ctx, task) {
-  return h('div', { class: 'task-name' }, checkbox(task, ctx), h('div', { class: 'task-summary' }, button(`${task.parentTaskId ? '↳ ' : ''}${task.title}`, () => ctx.edit(task.id), { class: `task-title ${task.status === 'done' ? 'is-done' : ''}`, 'data-open-task': '', title: 'Open task.' }), TaskTags(state, ctx, task)));
+  return h('div', { class: 'task-name' }, checkbox(task, ctx), h('div', { class: 'task-summary' }, button([task.parentTaskId && h('span', { class: 'subtask-marker', 'aria-hidden': 'true' }, '↳ '), task.title], () => ctx.edit(task.id), { class: `task-title ${task.status === 'done' ? 'is-done' : ''}`, 'data-open-task': '', title: 'Open task.' }), !task.parentTaskId && TaskTags(state, ctx, task)));
 }
 
 function TaskTable(state, ctx, tasks) {
   const headers = [['title', 'Task'], ['due', 'Due'], ['created', 'Created']];
+  const tasksById = new Map(state.data.tasks.map(task => [task.id, task]));
+  const childrenByParent = new Map();
+  for (const task of tasks) if (task.parentTaskId) {
+    const children = childrenByParent.get(task.parentTaskId) || [];
+    children.push(task);
+    childrenByParent.set(task.parentTaskId, children);
+  }
+  for (const children of childrenByParent.values()) children.sort((a, b) => a.position - b.position);
+  const visibleIds = new Set(tasks.map(task => task.id));
+  const rows = [];
+  const addTask = (task, depth = 0) => {
+    rows.push({ task, depth });
+    for (const child of childrenByParent.get(task.id) || []) addTask(child, depth + 1);
+  };
+  for (const task of tasks) if (!task.parentTaskId || !tasksById.has(task.parentTaskId)) addTask(task);
   return h('table', { class: 'task-table', 'aria-label': 'Task list' },
     h('thead', {}, h('tr', {}, headers.map(([key, label]) => h('th', { scope: 'col', class: `column-${key}`, 'aria-sort': state.ui.sort === key ? state.ui.direction === 'asc' ? 'ascending' : 'descending' : state.ui.sort === 'manual' && key === 'title' ? 'other' : 'none' }, SortButton(state, ctx, key, label))))),
-    h('tbody', {}, tasks.map(task => h('tr', { class: `task-row ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: state.ui.sort === 'manual',
+    h('tbody', {}, rows.map(({ task, depth }) => h('tr', { class: `task-row ${depth ? 'task-row--subtask' : ''} ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: state.ui.sort === 'manual',
       onDragstart: event => { event.dataTransfer.setData('text/checklist', task.id); event.dataTransfer.effectAllowed = 'move'; },
       onDragover: event => { if (state.ui.sort === 'manual') event.preventDefault(); },
       onDrop: event => { event.preventDefault(); const id = event.dataTransfer.getData('text/checklist'); if (state.ui.sort === 'manual' && id && id !== task.id) ctx.reorder(id, task.id); },
     },
-      h('td', { class: 'column-title' }, TaskHeading(state, ctx, task)),
+      h('td', { class: 'column-title' }, h('div', { class: depth ? 'task-nested' : '', style: depth ? { marginLeft: `${Math.min(depth, 4) * 20}px` } : {} }, TaskHeading(state, ctx, task))),
       h('td', { class: `column-due ${task.dueAt && task.dueAt < localDate() && task.status !== 'done' ? 'overdue' : ''}` }, h('time', { datetime: task.dueAt }, formatDate(task.dueAt))),
       h('td', { class: 'column-created' }, h('time', { datetime: task.createdAt }, formatDate(task.createdAt))),
     ))),
@@ -87,6 +102,16 @@ function TaskTable(state, ctx, tasks) {
 }
 
 function Board(state, ctx, tasks, byTag = false) {
+  const taskById = new Map(state.data.tasks.map(task => [task.id, task]));
+  const childrenByParent = new Map();
+  for (const task of tasks) {
+    if (!task.parentTaskId) continue;
+    const children = childrenByParent.get(task.parentTaskId) || [];
+    children.push(task);
+    childrenByParent.set(task.parentTaskId, children);
+  }
+  for (const children of childrenByParent.values()) children.sort((a, b) => a.position - b.position);
+  const groupedTasks = (columnTasks) => columnTasks.filter(task => !task.parentTaskId || !taskById.has(task.parentTaskId)).map(task => ({ task, children: (childrenByParent.get(task.id) || []).filter(child => !byTag || child.tagIds.some(id => task.tagIds.includes(id))) }));
   const columns = byTag
     ? state.data.tags.map(tag => ({ id: `tag-${tag.id}`, label: tag.name, tasks: tasks.filter(task => task.tagIds.includes(tag.id)), tag }))
     : [['open', 'To do'], ['in_progress', 'In progress'], ['done', 'Completed']].map(([status, label]) => ({ id: `status-${status}`, label, tasks: tasks.filter(task => task.status === status), status }));
@@ -94,7 +119,7 @@ function Board(state, ctx, tasks, byTag = false) {
     const { id, label } = column;
     return h('section', { class: column.tag ? 'board-column board-column--tag' : 'board-column', key: id, 'aria-label': label, 'data-tag-board': column.tag?.id, css: column.tag ? { '--tag-soft': tagAppearance(column.tag.color)['--tag-soft'] } : {}, onDragover: event => event.preventDefault(), onDrop: event => { event.preventDefault(); const id = event.dataTransfer.getData('text/checklist'); if (id && column.status) ctx.attempt(() => ctx.changeStatus(id, column.status)); } },
       h('div', { class: 'board-heading' }, h('h2', {}, label), h('span', { class: 'count' }, column.tasks.length)),
-      column.tasks.slice(0, state.ui.limit).map(task => h('article', { class: `task-card ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: true, onDragstart: event => { event.dataTransfer.setData('text/checklist', task.id); event.dataTransfer.effectAllowed = 'move'; } }, TaskHeading(state, ctx, task), task.dueAt && h('time', { class: `card-date ${task.dueAt < localDate() && task.status !== 'done' ? 'overdue' : ''}`, datetime: task.dueAt }, formatDate(task.dueAt)))),
+      groupedTasks(column.tasks).slice(0, state.ui.limit).map(({ task, children }) => h('article', { class: `task-card ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: true, onDragstart: event => { event.dataTransfer.setData('text/checklist', task.id); event.dataTransfer.effectAllowed = 'move'; } }, TaskHeading(state, ctx, task), task.dueAt && h('time', { class: `card-date ${task.dueAt < localDate() && task.status !== 'done' ? 'overdue' : ''}`, datetime: task.dueAt }, formatDate(task.dueAt)), children.map(child => h('div', { class: `task-card-subtask ${state.ui.editing?.id === child.id ? 'selected' : ''}`, key: child.id, 'data-task-id': child.id, onClick: openTaskOnClick(child, ctx) }, TaskHeading(state, ctx, child))))),
       !column.tasks.length && h('p', { class: 'board-empty' }, 'No tasks'),
     );
   }));
