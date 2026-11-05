@@ -93,13 +93,21 @@ The small `scripts/` folder and `package.json` are only for local checks and mak
 
 ## Development and checks
 
-Serve the directory over HTTP with any static web server; ES modules do not work reliably from `file://`. For example, with Python installed:
+Run the local development server with Node.js:
+
+```sh
+npm run dev
+```
+
+Open `http://localhost:8080`. The local server proxies `/__api/` requests to `api.cadenchau.com`, so localhost does not need to be added to the API's CORS allowlist. The API still enforces its normal password authentication. This proxy is only included in the development server; the deployed site continues to call the API directly.
+
+You can also serve the directory over HTTP with any static web server; ES modules do not work reliably from `file://`. For example, with Python installed:
 
 ```sh
 python3 -m http.server 8080
 ```
 
-This is only a local preview server. The deployed site is static. To sign in locally, add the exact origin `http://localhost:8080` to the API server's `CORS_ORIGINS` setting and restart the API. Reloading requires an API connection to authenticate; after sign-in, local edits remain available during temporary connection failures.
+That static server does not include the API proxy. To use it for local sign-in and sync, add the exact origin `http://localhost:8080` to the API server's `CORS_ORIGINS` setting and restart the API. Reloading requires an API connection to authenticate; after sign-in, local edits remain available during temporary connection failures.
 
 Optional checks use Node, with no package installation required. Node is only needed for these developer commands; it does not run the website:
 

@@ -74,6 +74,23 @@ test('browser API authenticates only to the configured API, paginates keys, and 
   assert(requests.every(({ parsed }) => parsed.pathname.includes('/tasks_cadenchau_com/')));
 });
 
+test('API uses the same-origin development proxy on localhost', async () => {
+  const originalLocation = globalThis.location;
+  globalThis.location = { hostname: 'localhost' };
+  try {
+    const api = createSyncApi(passwordAuthorization('sync-test-only'), async (url, options) => {
+      assert(url.startsWith('/__api/api/v1/collections/'));
+      assert.equal(options.mode, 'same-origin');
+      assert.equal(options.headers.Authorization, passwordAuthorization('sync-test-only'));
+      return Response.json([]);
+    });
+    assert.deepEqual(await api.keys(), []);
+  } finally {
+    if (originalLocation === undefined) delete globalThis.location;
+    else globalThis.location = originalLocation;
+  }
+});
+
 test('automatic sync uploads existing data, restores another device, and retries offline edits', async () => {
   const values = new Map(); let offline = false;
   const api = {

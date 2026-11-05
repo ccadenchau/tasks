@@ -2,6 +2,7 @@ import { h } from './dom.js';
 import { visibleTasks } from './model.js';
 import { button, formatDate, input, localDate } from './controls.js';
 import { tagChip, TagManager, TagViews } from './tags.js';
+import { tagAppearance } from './tag-colors.js';
 import { mountTabTrack } from './layout.js';
 import { displayData } from './status-actions.js';
 import { TaskPanel } from './task-panel.js';
@@ -10,9 +11,9 @@ import { ShortcutHelp } from './help.js';
 
 export function App(state, ctx) {
   const data = displayData(state);
-  const tasks = visibleTasks(data, { ...state.ui, status: state.ui.view === 'board' || state.ui.query.trim() ? 'all' : state.ui.status });
+  const tasks = visibleTasks(data, { ...state.ui, status: ['board', 'tag-board'].includes(state.ui.view) || state.ui.query.trim() ? 'all' : state.ui.status });
   const all = visibleTasks(data, { ...state.ui, status: 'all' });
-  const hasMore = state.ui.view === 'board' ? ['open', 'in_progress', 'done'].some(status => tasks.filter(task => task.status === status).length > state.ui.limit) : tasks.length > state.ui.limit;
+  const hasMore = ['board', 'tag-board'].includes(state.ui.view) ? tasks.length > state.ui.limit : tasks.length > state.ui.limit;
   const statusCounts = { all: all.length, active: all.filter(task => task.status !== 'done').length, done: all.filter(task => task.status === 'done').length };
   return h('div', { class: 'app' },
     h('header', { class: 'toolbar', key: 'toolbar' }, button(h('span', { 'aria-hidden': 'true' }, '?'), ctx.openHelp, { class: 'icon-button help-button', title: 'Keyboard shortcuts (?)', 'aria-label': 'Keyboard shortcuts', 'aria-haspopup': 'dialog', 'aria-expanded': String(Boolean(state.ui.helpOpen)), 'aria-keyshortcuts': '?' }), Search(state, ctx),
@@ -24,12 +25,13 @@ export function App(state, ctx) {
     h('div', { class: `panes ${state.ui.editing ? 'has-task-panel' : ''} ${state.ui.panelClosing ? 'is-panel-closing' : ''}`, key: 'panes', css: { '--panel-width': `${state.ui.panelWidth || 460}px` } },
       h('main', { class: 'list-pane', id: 'main', 'aria-label': 'Tasks', tabindex: '-1', onClick: ctx.mainPanelClick },
         h('div', { class: 'views-header', key: 'views-header', 'data-keep-panel': '' }, TagViews(state, ctx),
-          button(state.ui.view === 'board' ? 'List view' : 'Board view', ctx.toggleView, { class: 'text-button view-toggle', title: state.ui.view === 'board' ? 'Switch to list view (V)' : 'Switch to board view (V)', 'aria-keyshortcuts': 'v' }),
+          button(state.ui.view === 'board' || state.ui.view === 'tag-board' ? 'List view' : 'Board view', ctx.toggleView, { class: 'text-button view-toggle', title: state.ui.view === 'board' || state.ui.view === 'tag-board' ? 'Switch to list view (V)' : 'Switch to board view (V)', 'aria-keyshortcuts': 'v' }),
         ),
         h('div', { class: 'view-toolbar', key: 'view-toolbar', 'data-keep-panel': '' },
-          state.ui.view !== 'board' ? h('div', { class: 'status-tabs', role: 'group', 'aria-label': 'Show tasks', onMount: mountTabTrack, onUnmount: node => node.disposeLayout?.() }, [['active', 'Active'], ['all', 'All'], ['done', 'Completed']].map(([value, label]) => button([label, h('span', { class: 'count' }, statusCounts[value])], () => ctx.changeStatusFilter(value), { class: `status-tab ${state.ui.status === value ? 'selected' : ''}`, 'aria-pressed': String(state.ui.status === value), key: value }))) : h('div', { class: 'ordering-bar' }, button('Manual', ctx.resetOrder, { class: `order-button ${state.ui.sort === 'manual' ? 'selected' : ''}`, title: 'Use drag order (M)', 'aria-keyshortcuts': 'm', 'aria-pressed': String(state.ui.sort === 'manual') }), [['title', 'Name'], ['due', 'Due'], ['created', 'Created']].map(([key, label]) => SortButton(state, ctx, key, label))),
+          !['board', 'tag-board'].includes(state.ui.view) ? h('div', { class: 'status-tabs', role: 'group', 'aria-label': 'Show tasks', onMount: mountTabTrack, onUnmount: node => node.disposeLayout?.() }, [['active', 'Active'], ['all', 'All'], ['done', 'Completed']].map(([value, label]) => button([label, h('span', { class: 'count' }, statusCounts[value])], () => ctx.changeStatusFilter(value), { class: `status-tab ${state.ui.status === value ? 'selected' : ''}`, 'aria-pressed': String(state.ui.status === value), key: value }))) : h('div', { class: 'ordering-bar' }, button('Manual', ctx.resetOrder, { class: `order-button ${state.ui.sort === 'manual' ? 'selected' : ''}`, title: 'Use drag order (M)', 'aria-keyshortcuts': 'm', 'aria-pressed': String(state.ui.sort === 'manual') }), [['title', 'Name'], ['due', 'Due'], ['created', 'Created']].map(([key, label]) => SortButton(state, ctx, key, label))),
+          ['board', 'tag-board'].includes(state.ui.view) && state.data.tags.length > 0 && button(state.ui.view === 'tag-board' ? 'Status boards' : 'Boards by tag', ctx.toggleBoardMode, { class: 'text-button board-mode-toggle', 'aria-pressed': String(state.ui.view === 'tag-board') }),
         ),
-        h('div', { class: 'task-content', key: 'task-content' }, state.ui.view === 'board' ? Board(state, ctx, tasks) : TaskTable(state, ctx, tasks.slice(0, state.ui.limit)), !tasks.length && state.ui.view !== 'board' && h('p', { class: 'empty' }, state.ui.query ? 'No matches' : 'No tasks'), hasMore && button('Show more', () => ctx.store.ui({ limit: state.ui.limit + 100 }), { class: 'button show-more' })),
+        h('div', { class: 'task-content', key: 'task-content' }, ['board', 'tag-board'].includes(state.ui.view) ? Board(state, ctx, tasks, state.ui.view === 'tag-board') : TaskTable(state, ctx, tasks.slice(0, state.ui.limit)), !tasks.length && !['board', 'tag-board'].includes(state.ui.view) && h('p', { class: 'empty' }, state.ui.query ? 'No matches' : 'No tasks'), hasMore && button('Show more', () => ctx.store.ui({ limit: state.ui.limit + 100 }), { class: 'button show-more' })),
         h('footer', { class: 'pane-footer' }, h('span', {}, `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`), state.ui.syncStatus && button(h('span', { 'aria-hidden': 'true' }, '●'), ctx.syncNow, { class: `sync-indicator sync-indicator--${state.ui.syncStatus.kind}`, title: state.ui.syncStatus.title, 'aria-label': state.ui.syncStatus.title })),
         button([h('span', { 'aria-hidden': 'true' }, '+'), 'Add task'], ctx.createTask, { class: 'button button--primary add-task-fab', title: 'Add task (N or ⌘/Ctrl+Shift+A)', 'aria-keyshortcuts': 'n Control+Shift+A Meta+Shift+A', 'data-keep-panel': '', disabled: state.saving }),
       ),
@@ -84,13 +86,16 @@ function TaskTable(state, ctx, tasks) {
   );
 }
 
-function Board(state, ctx, tasks) {
-  return h('div', { class: 'board', 'aria-label': 'Task board' }, [['open', 'To do'], ['in_progress', 'In progress'], ['done', 'Completed']].map(([status, label]) => {
-    const column = tasks.filter(task => task.status === status);
-    return h('section', { class: 'board-column', key: status, 'aria-label': label, onDragover: event => event.preventDefault(), onDrop: event => { event.preventDefault(); const id = event.dataTransfer.getData('text/checklist'); if (id) ctx.attempt(() => ctx.changeStatus(id, status)); } },
-      h('div', { class: 'board-heading' }, h('h2', {}, label), h('span', { class: 'count' }, column.length)),
-      column.slice(0, state.ui.limit).map(task => h('article', { class: `task-card ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: true, onDragstart: event => { event.dataTransfer.setData('text/checklist', task.id); event.dataTransfer.effectAllowed = 'move'; } }, TaskHeading(state, ctx, task), task.dueAt && h('time', { class: `card-date ${task.dueAt < localDate() && task.status !== 'done' ? 'overdue' : ''}`, datetime: task.dueAt }, formatDate(task.dueAt)))),
-      !column.length && h('p', { class: 'board-empty' }, 'No tasks'),
+function Board(state, ctx, tasks, byTag = false) {
+  const columns = byTag
+    ? state.data.tags.map(tag => ({ id: `tag-${tag.id}`, label: tag.name, tasks: tasks.filter(task => task.tagIds.includes(tag.id)), tag }))
+    : [['open', 'To do'], ['in_progress', 'In progress'], ['done', 'Completed']].map(([status, label]) => ({ id: `status-${status}`, label, tasks: tasks.filter(task => task.status === status), status }));
+  return h('div', { class: 'board', 'aria-label': 'Task board' }, columns.map(column => {
+    const { id, label } = column;
+    return h('section', { class: column.tag ? 'board-column board-column--tag' : 'board-column', key: id, 'aria-label': label, 'data-tag-board': column.tag?.id, css: column.tag ? { '--tag-soft': tagAppearance(column.tag.color)['--tag-soft'] } : {}, onDragover: event => event.preventDefault(), onDrop: event => { event.preventDefault(); const id = event.dataTransfer.getData('text/checklist'); if (id && column.status) ctx.attempt(() => ctx.changeStatus(id, column.status)); } },
+      h('div', { class: 'board-heading' }, h('h2', {}, label), h('span', { class: 'count' }, column.tasks.length)),
+      column.tasks.slice(0, state.ui.limit).map(task => h('article', { class: `task-card ${state.ui.editing?.id === task.id ? 'selected' : ''}`, key: task.id, 'data-task-id': task.id, 'data-open-task': '', onClick: openTaskOnClick(task, ctx), draggable: true, onDragstart: event => { event.dataTransfer.setData('text/checklist', task.id); event.dataTransfer.effectAllowed = 'move'; } }, TaskHeading(state, ctx, task), task.dueAt && h('time', { class: `card-date ${task.dueAt < localDate() && task.status !== 'done' ? 'overdue' : ''}`, datetime: task.dueAt }, formatDate(task.dueAt)))),
+      !column.tasks.length && h('p', { class: 'board-empty' }, 'No tasks'),
     );
   }));
 }

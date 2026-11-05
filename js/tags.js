@@ -18,15 +18,15 @@ export function TagViews(state, ctx) {
 
 export function TagPicker(state, ctx, task) {
   const query = (state.ui.tagQuery || '').trim().toLocaleLowerCase();
-  const searching = state.ui.tagSearchOpen && query.length > 0;
-  const matches = searching ? state.data.tags.filter(tag => tag.name.toLocaleLowerCase().includes(query)) : [];
+  const searching = state.ui.tagSearchOpen;
+  const matches = searching ? state.data.tags.filter(tag => !query || tag.name.toLocaleLowerCase().includes(query)) : [];
   const assigned = task.tagIds.map(id => state.data.tags.find(tag => tag.id === id)).filter(Boolean);
   return h('section', { class: 'task-tags-editor' },
     h('div', { class: 'section-heading' }, h('h3', {}, 'Tags')),
     h('div', { class: 'assigned-tags', key: 'assigned-tags' }, assigned.length ? assigned.map(tag => tagChip(tag, () => ctx.viewTag(tag.id), { onRemove: () => ctx.toggleTag(tag.id) })) : h('span', { class: 'tags-empty' }, 'No tags')),
     h('div', { class: 'tag-search', key: 'tag-search', onFocusout: event => { if (!event.currentTarget.contains(event.relatedTarget)) ctx.store.ui({ tagSearchOpen: false }); } },
       input('tag-search', state.ui.tagQuery || '', { type: 'search', placeholder: 'Find a tag to add…', 'aria-label': 'Find a tag to add or remove', preserveWhileFocused: true, 'aria-expanded': String(Boolean(searching)), 'aria-controls': 'tag-search-results', onFocus: () => ctx.store.ui({ tagSearchOpen: true }), onInput: event => ctx.store.ui({ tagQuery: event.target.value, tagSearchOpen: true }), onKeydown: event => { if (event.key === 'Escape' && state.ui.tagSearchOpen) { event.preventDefault(); event.stopPropagation(); ctx.store.ui({ tagSearchOpen: false }); } } }),
-      searching && h('div', { class: 'tag-search-results', id: 'tag-search-results', 'aria-label': 'Matching tags' }, matches.length ? matches.map(tag => tagChip(tag, () => ctx.toggleTag(tag.id), { selected: task.tagIds.includes(tag.id) })) : h('div', { class: 'tag-search-empty' }, button('Create tag', () => ctx.openTags(task.id), { class: 'text-button' }))),
+      searching && h('div', { class: 'tag-search-results', id: 'tag-search-results', 'aria-label': 'Matching tags' }, matches.length ? matches.map(tag => tagChip(tag, () => ctx.toggleTag(tag.id), { selected: task.tagIds.includes(tag.id) })) : h('div', { class: 'tag-search-empty' }, query ? button('Create tag', () => ctx.openTags(task.id), { class: 'text-button' }) : 'No tags yet')),
     ),
   );
 }
@@ -43,7 +43,8 @@ export function TagManager(state, ctx) {
   return h('dialog', { class: 'modal tag-modal', key: 'tag-modal', 'aria-labelledby': 'tag-modal-title', onMount: node => queueMicrotask(() => { node.showModal(); node.querySelector('#tag-name')?.focus(); }), onCancel: event => { event.preventDefault(); ctx.closeTags(); }, onClick: event => { if (event.target === event.currentTarget) ctx.closeTags(); } },
     h('div', { class: 'modal-header' }, h('h2', { id: 'tag-modal-title' }, tag ? 'Edit tag' : 'Create tag'), iconButton('close', 'Close tag editor', ctx.closeTags)),
     h('div', { class: 'modal-body' },
-      h('div', { class: 'tag-manager-list' }, tag && button('Create tag', () => ctx.selectTag(null), { class: 'button button--small' }), state.data.tags.map(item => tagChip(item, () => ctx.selectTag(item.id), { selected: tag?.id === item.id }))),
+      h('div', { class: 'tag-manager-heading' }, h('h3', {}, tag ? 'Editing existing tag' : 'New tag'), tag && button('Create new tag', () => ctx.selectTag(null), { class: 'button button--small' })),
+      h('div', { class: 'tag-manager-list', 'aria-label': 'Existing tags' }, state.data.tags.length ? state.data.tags.map(item => tagChip(item, () => ctx.selectTag(item.id), { selected: tag?.id === item.id })) : h('span', { class: 'tags-empty' }, 'No tags yet. Create your first tag below.')),
       h('form', { class: 'tag-form', key: state.ui.tagFormKey, onSubmit: async event => {
         event.preventDefault(); const form = event.currentTarget;
         if (form.dataset.busy) return; form.dataset.busy = 'true';

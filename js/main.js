@@ -52,7 +52,8 @@ async function start() {
     sortBy(sort) { const ui = store.getState().ui; updateView({ sort, direction: ui.sort === sort && ui.direction === 'asc' ? 'desc' : 'asc' }); },
     resetOrder() { updateView({ sort: 'manual', direction: 'asc' }); },
     changeStatusFilter(status) { if (store.getState().ui.status !== status) updateView({ status, limit: 100 }); },
-    toggleView() { updateView({ view: store.getState().ui.view === 'board' ? 'list' : 'board', limit: 100 }); },
+    toggleView() { updateView({ view: store.getState().ui.view === 'board' || store.getState().ui.view === 'tag-board' ? 'list' : 'board', limit: 100 }); },
+    toggleBoardMode() { updateView({ view: store.getState().ui.view === 'tag-board' ? 'board' : 'tag-board', limit: 100 }); },
     async addTask(title) {
       const tagIds = [...store.getState().ui.tagIds];
       let id;

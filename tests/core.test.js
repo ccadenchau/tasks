@@ -519,7 +519,7 @@ test('GitHub Pages uses static assets without backend packages or hardcoded cred
   assert(!/rel="(?:icon|manifest)"|(?:src|href)="https?:\/\//.test(html));
   assert(html.includes("connect-src 'self' https://api.cadenchau.com"));
   assert(html.includes('js/main.js') && html.includes('css/components.css'));
-  await assert.rejects(readFile(new URL('../server.mjs', import.meta.url)));
+  await readFile(new URL('../server.mjs', import.meta.url));
   await assert.rejects(readFile(new URL('../worker/index.js', import.meta.url)));
   assert.equal((await readFile(new URL('../CNAME', import.meta.url), 'utf8')).trim(), 'tasks.cadenchau.com');
 });

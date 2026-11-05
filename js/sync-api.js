@@ -1,14 +1,17 @@
-const ROOT = 'https://api.cadenchau.com/api/v1/collections';
+const REMOTE_ROOT = 'https://api.cadenchau.com/api/v1/collections';
 const COLLECTION = 'tasks_cadenchau_com';
 const CHUNK_SIZE = 192 * 1024;
 
 export function createSyncApi(authorization, fetcher = globalThis.fetch.bind(globalThis)) {
+  const root = globalThis.location?.hostname === 'localhost' || globalThis.location?.hostname === '127.0.0.1' || globalThis.location?.hostname === '[::1]'
+    ? '/__api/api/v1/collections'
+    : REMOTE_ROOT;
   async function request(path, method = 'GET', value) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 20000);
     try {
       if (!authorization) throw new Error('Sign in to sync.');
-      const response = await fetcher(`${ROOT}${path}`, {
-        method, credentials: 'omit', mode: 'cors', cache: 'no-store', redirect: 'error', signal: controller.signal,
+      const response = await fetcher(`${root}${path}`, {
+        method, credentials: 'omit', mode: root.startsWith('/') ? 'same-origin' : 'cors', cache: 'no-store', redirect: 'error', signal: controller.signal,
         headers: { Authorization: authorization, ...(value === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(value === undefined ? {} : { body: JSON.stringify(value) }),
       });

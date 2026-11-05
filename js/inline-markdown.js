@@ -86,7 +86,7 @@ export function mountInlineMarkdownEditor(host, { value = '', onChange, onError 
   const state = markdown => EditorState.create({ doc: markdownParser.parse(markdown), plugins: editorPlugins() });
   const updateEmpty = () => { view.dom.dataset.empty = String(!view.state.doc.textContent && view.state.doc.childCount === 1); };
   const view = new EditorView(host, {
-    state: state(value), attributes: { class: 'markdown-editor', role: 'textbox', 'aria-label': 'Task notes (Markdown)', 'aria-multiline': 'true', 'data-placeholder': 'Write notes…', autocomplete: 'off' },
+    state: state(value), attributes: { class: 'markdown-editor', role: 'textbox', 'aria-label': 'Task notes (Markdown)', 'aria-multiline': 'true', 'data-placeholder': 'Write notes…', autocomplete: 'off', spellcheck: 'false' },
     dispatchTransaction(transaction) {
       try {
         if (transaction.doc.textContent.length > 1000000) throw new Error('Notes are limited to 1,000,000 characters.');
