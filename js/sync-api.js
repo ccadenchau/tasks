@@ -1,22 +1,24 @@
-const ROOT = '/api/sync';
+const ROOT = 'https://api.cadenchau.com/api/v1/collections';
 const COLLECTION = 'tasks_cadenchau_com';
 const CHUNK_SIZE = 192 * 1024;
 
-export function createSyncApi(fetcher = globalThis.fetch.bind(globalThis)) {
+export function createSyncApi(authorization, fetcher = globalThis.fetch.bind(globalThis)) {
   async function request(path, method = 'GET', value) {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 20000);
     try {
+      if (!authorization) throw new Error('Sign in to sync.');
       const response = await fetcher(`${ROOT}${path}`, {
-        method, credentials: 'same-origin', mode: 'same-origin', cache: 'no-store', redirect: 'error', signal: controller.signal,
-        headers: { ...(value === undefined ? {} : { 'Content-Type': 'application/json' }) },
+        method, credentials: 'omit', mode: 'cors', cache: 'no-store', redirect: 'error', signal: controller.signal,
+        headers: { Authorization: authorization, ...(value === undefined ? {} : { 'Content-Type': 'application/json' }) },
         ...(value === undefined ? {} : { body: JSON.stringify(value) }),
       });
-      if (!response.ok) { const error = new Error(`Cloud sync failed (${response.status}). Click to retry.`); error.status = response.status; throw error; }
+      if (!response.ok) { const error = new Error(response.status === 401 ? 'Sign in again to sync. Reload this page.' : `Cloud sync failed (${response.status}). Click to retry.`); error.status = response.status; throw error; }
       return response.json();
     } finally { clearTimeout(timeout); }
   }
   const entry = key => `/${COLLECTION}/entry?key=${encodeURIComponent(key)}`;
   return {
+    signOut() { authorization = ''; },
     async keys() {
       const keys = [];
       for (let offset = 0; ; offset += 1000) {

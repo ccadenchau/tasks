@@ -1,7 +1,6 @@
-import { createSyncApi } from './sync-api.js';
 import { mergeSync, syncedData, validateSync } from './sync-model.js';
 
-export function startCloudSync(store, repository, { api = createSyncApi(), interval = 30000, delay = 700 } = {}) {
+export function startCloudSync(store, repository, { api, interval = 30000, delay = 700 }) {
   let timer, running = false, requested = false, stopped = false, uploaded = '', revision = store.getState().revision;
   const uploadedFiles = new Set();
   const status = (kind, title) => store.ui({ syncStatus: { kind, title } });

@@ -13,10 +13,13 @@ import { App } from './ui.js';
 import { handleShortcut } from './shortcuts.js';
 import { startCloudSync } from './sync.js';
 import { createContentTransition } from './transitions.js';
+import { signIn } from './sign-in.js';
 
 const root = document.querySelector('#app');
 
 async function start() {
+  await removeOldOfflineCache();
+  const api = await signIn(root);
   const repository = await openRepository();
   let initial = await repository.load();
   validateData(initial.data);
@@ -24,9 +27,9 @@ async function start() {
   if (migrateDocuments(migrated)) { validateData(migrated); const revision = await repository.commit(initial.data, migrated, initial.revision); initial = { data: migrated, revision }; }
   if (!initial.sync) { await repository.commit(initial.data, initial.data, initial.revision); initial = await repository.load(); }
   const store = createStore(repository, initial);
-  const cloud = startCloudSync(store, repository);
+  const cloud = startCloudSync(store, repository, { api });
   let active = null, returnFocus = null, tagReturnFocus = null, confirmationFocus = null, helpReturnFocus = null;
-  try { store.ui({ panelWidth: clampPanelWidth(localStorage.getItem('checklist-panel-width') || 460, Math.min(1600, innerWidth) - (innerWidth > 900 ? 82 : 34)) }); } catch {}
+  try { store.ui({ panelWidth: clampPanelWidth(localStorage.getItem('checklist-panel-width') || 460, innerWidth) }); } catch {}
   const statuses = createStatusActions(store, { getSession: () => active, onComplete: celebrateCompletion });
 
   function editState(status, error = '') { store.ui({ editStatus: status, editError: error }); }
@@ -37,6 +40,7 @@ async function start() {
   const ctx = {
     store,
     syncNow: () => cloud.request(),
+    signOut() { ctx.attempt(async () => { await flushTask(); await store.whenIdle(); cloud.stop(); api.signOut(); location.reload(); }); },
     openHelp(event) { helpReturnFocus = event?.currentTarget || document.activeElement; store.ui({ helpOpen: true }); },
     closeHelp() { store.ui({ helpOpen: false }); requestAnimationFrame(() => { if (helpReturnFocus?.isConnected) helpReturnFocus.focus(); }); },
     showError(error) { store.error(error.message); },
@@ -64,6 +68,8 @@ async function start() {
     mountDivider(node) {
       queueMicrotask(() => {
         if (!node.isConnected) return;
+        const panelWidth = clampPanelWidth(store.getState().ui.panelWidth, node.parentElement.getBoundingClientRect().width);
+        if (panelWidth !== store.getState().ui.panelWidth) store.ui({ panelWidth });
         node.detachResize = attachPanelResize(node, { onChange: panelWidth => store.ui({ panelWidth }), onFinish: () => { try { localStorage.setItem('checklist-panel-width', store.getState().ui.panelWidth); } catch {} } });
       });
     },
@@ -194,7 +200,6 @@ async function start() {
   window.addEventListener('beforeunload', event => { if (store.getState().saving || active?.dirty) { event.preventDefault(); event.returnValue = ''; } });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') ctx.tryFlush(); });
   document.addEventListener('keydown', event => handleShortcut(event, ctx));
-  removeOldOfflineCache();
 }
 
 async function removeOldOfflineCache() {

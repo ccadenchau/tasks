@@ -1,9 +1,13 @@
-.app { width: 100%; max-width: 1600px; height: 100vh; height: 100dvh; margin: auto; padding: clamp(16px, 5vh, 64px) 40px; }
-.frame { height: 100%; min-height: 0; display: flex; flex-direction: column; background: #fff; border: 1px solid #dce5f0; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 48px #234b8310; }
-.toolbar { flex-shrink: 0; min-height: 70px; padding: 16px 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 460px) minmax(0, 1fr); align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
+.app { width: 100%; height: 100vh; height: 100dvh; min-height: 0; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+.sign-in { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; padding: 24px; background: #fff; }
+.sign-in-form { display: flex; flex-direction: column; gap: 20px; width: min(100%, 320px); }
+.sign-in-form h1 { font-size: 22px; font-weight: 600; }
+.app::before { content: ''; position: fixed; inset-block: 0; left: 50%; transform: translateX(-50%); width: min(100%, var(--content-width)); box-sizing: border-box; border-inline: 1px solid var(--border); pointer-events: none; z-index: 5; }
+.toolbar { flex-shrink: 0; min-height: 70px; padding-block: 16px; padding-inline: max(24px, calc((100% - var(--content-width)) / 2 + 24px)); display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 460px) minmax(0, 1fr); align-items: center; gap: 20px; border-bottom: 1px solid var(--border); }
 .toolbar .search-field { grid-column: 2; width: 100%; }
 .toolbar .search { background: #fbfdff; }
-.toolbar .help-button { grid-column: 1; justify-self: start; font-size: 18px; }
+.toolbar .help-button { grid-column: 1; justify-self: start; }
+.help-button > span { display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid currentColor; border-radius: 50%; font-size: 11px; font-weight: 600; line-height: 1; }
 .toolbar > .actions { grid-column: 3; justify-self: end; }
 .error-banner { padding: 10px 24px; border-bottom: 1px solid #f5dce1; background: #fffafa; }
 .list-pane { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
@@ -28,9 +32,9 @@
 .task-row:hover { background: #fbfdff; }
 .task-row.selected { background: #edf4ff; }
 .task-name { display: flex; gap: 10px; align-items: center; min-width: 0; }
-.task-summary { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-.task-summary > .task-title { flex: 1; }
-.task-summary > .task-tags { flex: 0 1 45%; max-width: 45%; justify-content: flex-end; margin-left: auto; }
+.task-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.task-summary > .task-title { flex: 0 1 auto; max-width: 100%; }
+.task-summary > .task-tags { flex: 0 1 auto; }
 .task-checkbox { margin: 0; flex-shrink: 0; }
 .task-title { border: 0; background: none; padding: 0; min-width: 0; color: #435775; font-size: 12px; text-align: left; line-height: 1.6; overflow-wrap: anywhere; }
 .task-title:hover { color: var(--accent); }
@@ -49,14 +53,12 @@
 .card-date { display: block; margin-top: 12px; font-size: 10px; color: var(--muted); }
 .board-empty { font-size: 10px; color: #a5b3c7; padding: 20px 0; text-align: center; }
 .task-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: #fbfdff; border-left: 1px solid var(--border); animation: task-panel-in .2s ease-out both; }
-.pane-header { flex-shrink: 0; height: 57px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; }
-.pane-header > .icon-button { margin-left: auto; }
-.task-panel-scroll { flex: 1; min-width: 240px; min-height: 0; overflow-y: auto; padding: 12px 24px 24px; }
-.task-detail-title { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0; font-size: 21px; font-weight: 600; line-height: 1.5; color: #263449; }
-.task-properties { display: flex; flex-direction: column; gap: 18px; margin: 24px 0; }
+.pane-header { flex-shrink: 0; min-height: 64px; padding: 16px 24px; display: flex; gap: 12px; align-items: center; }
+.task-panel-scroll { flex: 1; min-width: 240px; min-height: 0; overflow-y: auto; padding: 0 24px 24px; }
+.task-detail-title { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0; font-size: 21px; font-weight: 600; line-height: 1.5; color: #263449; }
+.task-properties { display: flex; flex-direction: column; gap: 18px; margin: 0 0 24px; }
 .property { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.property .segmented { flex: 0 1 224px; width: 224px; min-width: 0; max-width: 100%; }
-.property .segment { padding: 6px; font-size: 10px; }
+.property .segmented { flex: 0 1 240px; width: 240px; min-width: 0; max-width: 100%; }
 .task-properties > .field { display: grid; grid-template-columns: 1fr 190px; align-items: center; }
 .task-properties .input { background: #fff; font-size: 11px; padding: 7px 8px; }
 .task-tags-editor { border-top: 1px solid var(--border); padding-top: 20px; margin-bottom: 24px; }
@@ -96,7 +98,7 @@ button.color-swatch { border: 0; padding: 0; background: none; }
 
 
 
-.panes { display: grid; grid-template-columns: minmax(0, 1fr) 0px minmax(0, 0px); flex: 1; min-height: 0; transition: grid-template-columns .2s ease; }
+.panes { display: grid; grid-template-columns: minmax(0, 1fr) 0px minmax(0, 0px); flex: 1; width: 100%; max-width: var(--content-width); margin-inline: auto; min-height: 0; transition: grid-template-columns .2s ease; }
 .panes.has-task-panel { grid-template-columns: minmax(0, 1fr) 7px minmax(0, var(--panel-width, 460px)); }
 .panes.is-panel-closing { grid-template-columns: minmax(0, 1fr) 0px minmax(0, 0px); }
 .panes.is-resizing { transition: none; }
@@ -164,12 +166,10 @@ button.color-swatch { border: 0; padding: 0; background: none; }
   .has-task-panel .board { grid-template-columns: 1fr; }
 }
 @media (max-width: 900px) {
-  .app { padding: 24px 16px; }
   .status-tabs { gap: 13px; }
   .task-panel-scroll, .pane-header, .panel-save-status { padding-left: 18px; padding-right: 18px; }
 }
 @media (max-width: 700px) {
-  .app { padding: 16px; }
   .toolbar { padding: 14px 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .view-toolbar { padding: 8px 16px 0; flex-wrap: wrap; }
   .task-table th:first-child, .task-table td:first-child { padding-left: 16px; }

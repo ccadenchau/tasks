@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyData, newTask, removeTask } from '../js/model.js';
 import { initialSync, recordChanges, mergeSync, syncedData } from '../js/sync-model.js';
+import { passwordAuthorization } from '../js/sign-in.js';
 import { createSyncApi } from '../js/sync-api.js';
 import { startCloudSync } from '../js/sync.js';
 import { createStore } from '../js/store.js';
@@ -50,15 +51,16 @@ test('sync merge removes dangling tag and parent links after concurrent deletion
   assert.deepEqual(merged.tasks[0].tagIds, []);
 });
 
-test('browser API uses the same-origin proxy without credentials, paginates keys, and chunks attachment bytes', async () => {
+test('browser API authenticates only to the configured API, paginates keys, and chunks attachment bytes', async () => {
   const requests = [], values = new Map();
-  const api = createSyncApi(async (url, options) => {
+  const authorization = passwordAuthorization('sync-test-only');
+  const api = createSyncApi(authorization, async (url, options) => {
     const parsed = new URL(url, 'https://tasks.cadenchau.com'); requests.push({ parsed, options });
-    assert(url.startsWith('/api/sync'));
-    assert.equal(parsed.origin, 'https://tasks.cadenchau.com');
-    assert.equal(options.credentials, 'same-origin'); assert.equal(options.redirect, 'error');
-    assert.equal(options.mode, 'same-origin');
-    assert.equal(options.headers.Authorization, undefined);
+    assert(url.startsWith('https://api.cadenchau.com/api/v1/collections'));
+    assert.equal(parsed.origin, 'https://api.cadenchau.com');
+    assert.equal(options.credentials, 'omit'); assert.equal(options.redirect, 'error');
+    assert.equal(options.mode, 'cors');
+    assert.equal(options.headers.Authorization, authorization);
     const key = parsed.searchParams.get('key');
     if (options.method === 'PUT') { values.set(key, JSON.parse(options.body)); return Response.json(values.get(key)); }
     if (parsed.pathname.endsWith('/keys')) return Response.json(parsed.searchParams.get('offset') === '0' ? Array.from({ length: 1000 }, (_, i) => String(i)) : ['last']);

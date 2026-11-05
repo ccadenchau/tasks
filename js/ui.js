@@ -2,7 +2,7 @@ import { h } from './dom.js';
 import { visibleTasks } from './model.js';
 import { button, formatDate, input, localDate } from './controls.js';
 import { tagChip, TagManager, TagViews } from './tags.js';
-import { mountTabTrack, mountTagOverflow } from './layout.js';
+import { mountTabTrack } from './layout.js';
 import { displayData } from './status-actions.js';
 import { TaskPanel } from './task-panel.js';
 import { Confirmation } from './dialogs.js';
@@ -14,10 +14,10 @@ export function App(state, ctx) {
   const all = visibleTasks(data, { ...state.ui, status: 'all' });
   const hasMore = state.ui.view === 'board' ? ['open', 'in_progress', 'done'].some(status => tasks.filter(task => task.status === status).length > state.ui.limit) : tasks.length > state.ui.limit;
   const statusCounts = { all: all.length, active: all.filter(task => task.status !== 'done').length, done: all.filter(task => task.status === 'done').length };
-  return h('div', { class: 'app' }, h('div', { class: 'frame' },
+  return h('div', { class: 'app' },
     h('header', { class: 'toolbar', key: 'toolbar' }, button(h('span', { 'aria-hidden': 'true' }, '?'), ctx.openHelp, { class: 'icon-button help-button', title: 'Keyboard shortcuts (?)', 'aria-label': 'Keyboard shortcuts', 'aria-haspopup': 'dialog', 'aria-expanded': String(Boolean(state.ui.helpOpen)), 'aria-keyshortcuts': '?' }), Search(state, ctx),
       h('div', { class: 'actions' }, button('Tags', () => ctx.openTags(), { title: 'Edit tags (T)', 'aria-keyshortcuts': 't', 'aria-haspopup': 'dialog', 'aria-expanded': String(state.ui.tagsOpen) }),
-        h('details', { class: 'menu', key: 'data-menu' }, h('summary', { class: 'button' }, 'Data'), h('div', { class: 'menu-items' }, button('Export', ctx.exportData, { title: 'Download a backup including task notes and files.' }), button('Import', ctx.importData, { title: 'Replace data from a backup.' }))),
+        h('details', { class: 'menu', key: 'data-menu' }, h('summary', { class: 'button' }, 'Data'), h('div', { class: 'menu-items' }, button('Export', ctx.exportData, { title: 'Download a backup including task notes and files.' }), button('Import', ctx.importData, { title: 'Replace data from a backup.' }), button('Sign out', ctx.signOut))),
       ),
     ),
     state.error && h('p', { class: 'error error-banner', key: 'storage-error', role: 'alert' }, state.error),
@@ -39,7 +39,7 @@ export function App(state, ctx) {
     state.ui.tagsOpen && TagManager(state, ctx),
     state.ui.confirmation && Confirmation(state, ctx),
     state.ui.helpOpen && ShortcutHelp(ctx),
-  ));
+  );
 }
 
 function SortButton(state, ctx, key, label) {
@@ -98,5 +98,5 @@ function Board(state, ctx, tasks) {
 function TaskTags(state, ctx, task) {
   const tags = task.tagIds.map(id => state.data.tags.find(tag => tag.id === id)).filter(Boolean);
   if (!tags.length) return null;
-  return h('div', { class: 'task-tags', key: 'tags', 'aria-label': 'Task tags', onMount: mountTagOverflow, onUnmount: node => node.disposeLayout?.() }, tags.map(tag => tagChip(tag, () => ctx.viewTag(tag.id))), h('span', { class: 'tag-overflow', hidden: true }, `+${tags.length}`));
+  return h('div', { class: 'task-tags', key: 'tags', 'aria-label': 'Task tags' }, tags.map(tag => tagChip(tag, () => ctx.viewTag(tag.id))));
 }

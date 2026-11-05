@@ -10,9 +10,12 @@ export function TaskPanel(state, ctx) {
   const children = displayData(state).tasks.filter(child => child.parentTaskId === task.id && !child.archivedAt).sort((a, b) => a.position - b.position);
   const parent = state.data.tasks.find(parent => parent.id === task.parentTaskId);
   return h('aside', { class: 'task-panel', key: task.id, 'aria-label': 'Task details', onMount: node => queueMicrotask(() => { const title = node.querySelector('[aria-label="Task title"]'); title?.focus(); if (state.ui.focusTitle) title?.select(); }) },
-    h('div', { class: 'pane-header', title: 'Click the task list or press Escape to close.' }, parent && button(parent.title, () => ctx.edit(parent.id), { class: 'text-button parent-link' }), iconButton('trash', 'Delete task', () => ctx.deleteTask(task.id), { class: 'icon-button danger', disabled: state.saving })),
-    h('div', { class: 'task-panel-scroll' },
+    h('div', { class: 'pane-header' },
       input('task-title', task.title, { class: 'task-detail-title', 'aria-label': 'Task title', maxlength: 1000, preserveWhileFocused: true, onInput: event => ctx.changeTask({ title: event.target.value }), onBlur: () => ctx.tryFlush() }),
+      iconButton('trash', 'Delete task', () => ctx.deleteTask(task.id), { class: 'icon-button danger', disabled: state.saving }),
+    ),
+    h('div', { class: 'task-panel-scroll' },
+      parent && button(parent.title, () => ctx.edit(parent.id), { class: 'text-button parent-link' }),
       h('div', { class: 'task-properties' },
         h('div', { class: 'property' }, h('span', { class: 'field-label' }, 'Status'), segmented('Task status', [['open', 'To do'], ['in_progress', 'In progress'], ['done', 'Done']], task.status, status => ctx.attempt(() => ctx.changeStatus(task.id, status)))),
         field('Due date', input('dueAt', task.dueAt, { type: 'date', onChange: event => { ctx.changeTask({ dueAt: event.target.value || null }); ctx.tryFlush(); } })),

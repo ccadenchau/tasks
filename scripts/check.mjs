@@ -11,7 +11,7 @@ const imports = new Map();
 for (const file of sources) {
   const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
   if (result.status !== 0) { process.stderr.write(result.stderr); process.exit(1); }
-  if (file.startsWith('js/') || file.startsWith('worker/')) {
+  if (file.startsWith('js/')) {
     const source = await readFile(file, 'utf8');
     const dependencies = [];
     for (const match of source.matchAll(/from ['"]([^'"]+)['"]/g)) {
@@ -24,7 +24,7 @@ for (const file of sources) {
 }
 const used = new Set();
 function visit(file) { if (used.has(file)) return; used.add(file); for (const dependency of imports.get(file) || []) visit(dependency); }
-visit('js/main.js'); visit('worker/index.js');
+visit('js/main.js');
 const unused = [...imports.keys()].filter(file => !used.has(file));
 if (unused.length) throw new Error(`Unused application modules: ${unused.join(', ')}`);
 const html = await readFile('index.html', 'utf8');

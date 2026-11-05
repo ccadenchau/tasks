@@ -511,12 +511,15 @@ test('status changes from the open task save its notes and update the board toge
   } finally { session.dispose(); store.destroy(); }
 });
 
-test('frontend uses local static assets and same-origin sync without a Node server', async () => {
+test('GitHub Pages uses static assets without backend packages or hardcoded credentials', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert(!manifest.scripts.start);
+  assert(!manifest.scripts.start && !manifest.scripts.deploy);
+  assert(!manifest.dependencies && !manifest.devDependencies);
   assert(!/rel="(?:icon|manifest)"|(?:src|href)="https?:\/\//.test(html));
-  assert(html.includes("connect-src 'self';"));
+  assert(html.includes("connect-src 'self' https://api.cadenchau.com"));
   assert(html.includes('js/main.js') && html.includes('css/components.css'));
   await assert.rejects(readFile(new URL('../server.mjs', import.meta.url)));
+  await assert.rejects(readFile(new URL('../worker/index.js', import.meta.url)));
+  assert.equal((await readFile(new URL('../CNAME', import.meta.url), 'utf8')).trim(), 'tasks.cadenchau.com');
 });
