@@ -40,6 +40,7 @@ export function App(state, ctx) {
         h('footer', { class: 'pane-footer' }, h('span', {}, state.ui.view === 'scheduled' ? `${state.data.scheduledTasks.length} daily ${state.data.scheduledTasks.length === 1 ? 'goal' : 'goals'}` : `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`), state.ui.syncStatus && button(h('span', { 'aria-hidden': 'true' }, '●'), ctx.syncNow, { class: `sync-indicator sync-indicator--${state.ui.syncStatus.kind}`, title: state.ui.syncStatus.title, 'aria-label': state.ui.syncStatus.title })),
         button([h('span', { 'aria-hidden': 'true' }, '+'), 'Add task'], ctx.createTask, { class: 'button button--primary add-task-fab', title: 'Add task (N or ⌘/Ctrl+Shift+A)', 'aria-keyshortcuts': 'n Control+Shift+A Meta+Shift+A', 'data-keep-panel': '', disabled: state.saving }),
       ),
+      state.ui.editing && h('button', { class: 'task-panel-dismiss', type: 'button', 'aria-label': 'Close task details', title: 'Close task details', onClick: ctx.closeEditor }),
       state.ui.editing && h('div', { class: 'panel-divider', role: 'separator', 'aria-label': 'Resize task panel', 'aria-orientation': 'vertical', 'aria-valuemin': 260, 'aria-valuenow': state.ui.panelWidth || 460, tabindex: 0, onMount: node => ctx.mountDivider(node), onUnmount: node => node.detachResize?.() }),
       state.ui.editing && TaskPanel(state, ctx),
     ),

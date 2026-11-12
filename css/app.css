@@ -194,6 +194,7 @@ button.color-swatch { border: 0; padding: 0; background: none; }
 .panes.has-task-panel { grid-template-columns: minmax(0, 1fr) 7px minmax(0, var(--panel-width, 460px)); }
 .panes.is-panel-closing { grid-template-columns: minmax(0, 1fr) 0px minmax(0, 0px); }
 .panes.is-resizing { transition: none; }
+.task-panel-dismiss { display: block; position: fixed; inset: 70px max(0px, calc((100% - var(--content-width)) / 2 + var(--panel-width, 460px) + 7px)) 0 max(0px, calc((100% - var(--content-width)) / 2)); width: auto; height: auto; border: 0; padding: 0; background: transparent; cursor: default; z-index: 4; }
 .panel-divider { position: relative; cursor: col-resize; touch-action: none; background: #f3f7fc; border-inline: 1px solid var(--border); z-index: 2; }
 .panel-divider::after { content: ''; position: absolute; width: 3px; height: 30px; border-radius: 3px; background: #c4d3e8; top: 50%; left: 1px; transform: translateY(-50%); }
 .panel-divider:hover, .panel-divider:focus-visible { background: #dbeafe; outline: none; }
@@ -273,6 +274,7 @@ button.color-swatch { border: 0; padding: 0; background: none; }
   .column-due { width: 25%; }
   .task-table td, .task-table th { padding-left: 7px; padding-right: 7px; }
   .task-panel { position: fixed; top: 16px; right: 16px; bottom: 16px; width: min(88vw, var(--panel-width, 460px)); max-width: calc(100vw - 42px); z-index: 20; border: 1px solid #dce5f0; border-radius: 12px; box-shadow: 0 12px 48px #234b8324; }
+  .task-panel-dismiss { inset: 0; z-index: 19; }
   .board { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px; padding: 8px 16px 16px; }
   .board-column { min-width: 0; }
   .has-task-panel .board { display: grid; }
